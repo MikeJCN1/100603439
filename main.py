@@ -3,15 +3,13 @@ from ast_parser import Parser
 from interpreter import evaluate
 
 
-def main():
+if __name__ == '__main__':
     try:
         with open("input.txt", 'r') as f:
             for line in f:
                 line = line.strip()
-                if not line:
-                    continue
+                print(f"\nExpression: {line}")
 
-                print(f"\nBinary Expression: {line}")
                 lexer = Lexer(line)
                 tokens = lexer.scan()
                 parser = Parser(tokens)
@@ -25,7 +23,6 @@ def main():
         print(f"Error: {e}")
 
 
-if __name__ == '__main__':
-    main()
+
 
 
