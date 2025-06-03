@@ -7,24 +7,16 @@ class Lexer:
         self.tokens = []
         self.index = 0
         self.symbol_dict = {
-            '+': TokenType.plus,
-            '-': TokenType.minus,
-            '*': TokenType.multiply,
-            '/': TokenType.divide,
-            '(': TokenType.l_paren,
-            ')': TokenType.r_paren,
-            '<': TokenType.less_than,
-            '>': TokenType.greater_than,
-            '!': TokenType.exclamation,
-            '=': TokenType.equal
+            '+': TokenType.plus, '-': TokenType.minus, '*': TokenType.multiply, '/': TokenType.divide,
+            '(': TokenType.l_paren, ')': TokenType.r_paren, '<': TokenType.less_than, '>': TokenType.greater_than,
+            '!': TokenType.exclamation, '=': TokenType.equal
         }
         self.multi_char_dict = {
-            '<=': TokenType.less_or_equal,
-            '>=': TokenType.greater_or_equal,
-            '==': TokenType.equal,
+            '<=': TokenType.less_or_equal, '>=': TokenType.greater_or_equal, '==': TokenType.equal,
             '!=': TokenType.not_equal
         }
 
+    # looks for tokens in the text
     def scan(self):
         while self.index < len(self.input):
             char = self.input[self.index]
@@ -38,43 +30,47 @@ class Lexer:
             elif char.isdigit() or char == '.':
                 self.number()
             elif char.isalpha():
-                self.identifier()
+                self.boolean()
             elif char in self.symbol_dict:
                 self.tokens.append(Token(self.symbol_dict[char], char))
                 self.index += 1
+            elif char == '"':
+                self.string_token()
             else:
                 raise Exception(f"Unexpected character: {char}")
 
         self.tokens.append(Token(TokenType.input_end, ""))
         return self.tokens
 
+    # tokenizes numbers including decimals
     def number(self):
         number = ""
-        decimal = False
-
         while self.index < len(self.input):
-            num = self.input[self.index]
-
-            if num == '.':
-                if decimal:
-                    raise Exception("Cannot place multiple decimal points together.")
-                decimal = True
-                number += '.'
-            elif num.isdigit():
-                number += num
+            char = self.input[self.index]
+            if char.isdigit() or char == '.':
+                number += char
+                self.index += 1
+                if number.count('.') > 1:
+                    raise Exception("Multiple decimal points not allowed.")
             else:
+                break
+
+        if '.' in number:
+            value = float(number)
+        else:
+            value = int(number)
+        self.tokens.append(Token(TokenType.number, value))
+
+    # tokenizes boolean keywords
+    def boolean(self):
+        start_index = self.index
+        while self.index < len(self.input):
+            char = self.input[self.index]
+            if not char.isalnum():
                 break
             self.index += 1
 
-        value = float(number) if decimal else int(number)
-        self.tokens.append(Token(TokenType.number, value))
-
-    def identifier(self):
-        start = self.index
-        while self.index < len(self.input) and self.input[self.index].isalnum():
-            self.index += 1
-        text = self.input[start:self.index]
-
+        text = self.input[start_index:self.index]
         if text == "true":
             self.tokens.append(Token(TokenType.true, True))
         elif text == "false":
@@ -84,6 +80,20 @@ class Lexer:
         elif text == "or":
             self.tokens.append(Token(TokenType.or_bool, "or"))
         else:
-            raise Exception(f"Unknown identifier: {text}")
+            raise Exception(f"Unknown boolean keyword: {text}")
+
+    # tokenizes strings
+    def string_token(self):
+        self.index += 1
+        text = ""
+        while self.index < len(self.input):
+            char = self.input[self.index]
+            if char == '"':
+                self.index += 1
+                self.tokens.append(Token(TokenType.string, text))
+                return
+            text += char
+            self.index += 1
+        raise Exception("Missing the end quote to the string.")
 
 

@@ -3,9 +3,9 @@ from ast_parser import Parser
 from interpreter import evaluate
 
 
-if __name__ == '__main__':
+def run_file(filename="input.txt"):
     try:
-        with open("input.txt", 'r') as f:
+        with open(filename, 'r') as f:
             for line in f:
                 line = line.strip()
                 print(f"\nExpression: {line}")
@@ -18,11 +18,31 @@ if __name__ == '__main__':
                 print("Result:", result)
 
     except FileNotFoundError:
-        print("File not found.")
-    except Exception as e:
-        print(f"Error: {e}")
+        print(f"{filename} not found.")
 
 
+def run_manual():
+    print("\nType 'quit' when you want to exit the loop")
+    while True:
+        try:
+            user_input = input("Enter your expression here: ").strip()
+            if user_input.lower() == "quit":
+                print("Exiting the loop, goodbye.")
+                break
+
+            lexer = Lexer(user_input)
+            tokens = lexer.scan()
+            parser = Parser(tokens)
+            ast = parser.parse_expr()
+            result = evaluate(ast)
+            print("Result:", result)
+        except Exception as e:
+            print("Error:", e)
+
+
+if __name__ == '__main__':
+    run_file()
+    run_manual()
 
 
 

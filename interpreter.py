@@ -2,52 +2,57 @@ from tokens import TokenType
 from ast_parser import BinaryExpr, UnaryExpr
 
 
-def evaluate(expr):
-    if isinstance(expr, (int, float, bool)):
-        return expr
+def evaluate(expression):
+    # return base values
+    if type(expression) in (int, float, bool, str):
+        return expression
 
-    if isinstance(expr, UnaryExpr):
-        right = evaluate(expr.operand)
+    # handles unary expressions
+    if type(expression) is UnaryExpr:
+        operand = evaluate(expression.operand)
+        operator = expression.operator.type
 
-        if expr.operator.type == TokenType.exclamation:
-            return not right
-        if expr.operator.type == TokenType.minus:
-            return -right
-        raise Exception(f"Unknown unary operator: {expr.operator.type}")
+        if operator == TokenType.exclamation:
+            return not operand
+        elif operator == TokenType.minus:
+            return -operand
+        else:
+            raise Exception(f"Unknown unary operator: {operator}")
 
-    if isinstance(expr, BinaryExpr):
-        left = evaluate(expr.left)
-        right = evaluate(expr.right)
-        op = expr.operator.type
+    # handles binary expressions
+    if type(expression) is BinaryExpr:
+        left = evaluate(expression.left)
+        right = evaluate(expression.right)
+        operator = expression.operator.type
 
-        if op == TokenType.plus:
+        if operator == TokenType.plus:
+            if isinstance(left, str) or isinstance(right, str):
+                return str(left) + str(right)
             return left + right
-        if op == TokenType.minus:
-            return left - right
-        if op == TokenType.multiply:
-            return left * right
-        if op == TokenType.divide:
-            return left / right
-
-        if op == TokenType.less_than:
-            return left < right
-        if op == TokenType.less_or_equal:
-            return left <= right
-        if op == TokenType.greater_than:
-            return left > right
-        if op == TokenType.greater_or_equal:
-            return left >= right
-        if op == TokenType.equal:
+        elif operator in {TokenType.minus, TokenType.multiply, TokenType.divide}:
+            return {
+                TokenType.minus: left - right,
+                TokenType.multiply: left * right,
+                TokenType.divide: left / right
+            }[operator]
+        elif operator in {
+            TokenType.less_than, TokenType.less_or_equal,
+            TokenType.greater_than, TokenType.greater_or_equal
+        }:
+            return {
+                TokenType.less_than: left < right,
+                TokenType.less_or_equal: left <= right,
+                TokenType.greater_than: left > right,
+                TokenType.greater_or_equal: left >= right
+            }[operator]
+        elif operator == TokenType.equal:
             return left == right
-        if op == TokenType.not_equal:
+        elif operator == TokenType.not_equal:
             return left != right
-        if op == TokenType.and_bool:
+        elif operator == TokenType.and_bool:
             return left and right
-        if op == TokenType.or_bool:
+        elif operator == TokenType.or_bool:
             return left or right
-
-        raise Exception(f"Unknown binary operator: {op}")
-
-    raise Exception(f"Unknown expression type: {type(expr)}")
-
+        else:
+            raise Exception(f"Unknown binary operator: {operator}")
 
