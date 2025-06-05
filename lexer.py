@@ -28,9 +28,9 @@ class Lexer:
                 self.tokens.append(Token(self.multi_char_dict[two_char], two_char))
                 self.index += 2
             elif char.isdigit() or char == '.':
-                self.number()
+                self.number_token()
             elif char.isalpha():
-                self.boolean()
+                self.identify_token()
             elif char in self.symbol_dict:
                 self.tokens.append(Token(self.symbol_dict[char], char))
                 self.index += 1
@@ -43,7 +43,7 @@ class Lexer:
         return self.tokens
 
     # tokenizes numbers including decimals
-    def number(self):
+    def number_token(self):
         number = ""
         while self.index < len(self.input):
             char = self.input[self.index]
@@ -61,8 +61,8 @@ class Lexer:
             value = int(number)
         self.tokens.append(Token(TokenType.number, value))
 
-    # tokenizes boolean keywords
-    def boolean(self):
+    # tokenizes booleans and keywords
+    def identify_token(self):
         start_index = self.index
         while self.index < len(self.input):
             char = self.input[self.index]
@@ -79,8 +79,10 @@ class Lexer:
             self.tokens.append(Token(TokenType.and_bool, "and"))
         elif text == "or":
             self.tokens.append(Token(TokenType.or_bool, "or"))
+        elif text == "del":
+            self.tokens.append(Token(TokenType.delete, "del"))
         else:
-            raise Exception(f"Unknown boolean keyword: {text}")
+            self.tokens.append(Token(TokenType.identifier, text))
 
     # tokenizes strings
     def string_token(self):

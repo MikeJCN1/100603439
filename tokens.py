@@ -31,4 +31,5 @@ class TokenType(Enum):
     or_bool = 18
     exclamation = 19
     string = 20
-
+    identifier = 21
+    delete = 22
