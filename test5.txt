@@ -1,0 +1,11 @@
+running = true
+shoppinglist = ""
+
+while (running == true) {
+    item = input("Add item: ")
+    if (item == "") {
+        running = false
+    }
+    shoppinglist = shoppinglist + ", " + item
+}
+print shoppinglist

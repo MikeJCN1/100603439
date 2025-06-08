@@ -9,15 +9,16 @@ class Lexer:
         self.symbol_dict = {
             '+': TokenType.plus, '-': TokenType.minus, '*': TokenType.multiply, '/': TokenType.divide,
             '(': TokenType.l_paren, ')': TokenType.r_paren, '<': TokenType.less_than, '>': TokenType.greater_than,
-            '!': TokenType.exclamation, '=': TokenType.equal
+            '!': TokenType.exclamation, '=': TokenType.equal, '{': TokenType.left_cbracket,
+            '}': TokenType.right_cbracket
         }
         self.multi_char_dict = {
-            '<=': TokenType.less_or_equal, '>=': TokenType.greater_or_equal, '==': TokenType.equal,
+            '<=': TokenType.less_or_equal, '>=': TokenType.greater_or_equal, '==': TokenType.equal_comparison,
             '!=': TokenType.not_equal
         }
 
     # looks for tokens in the text
-    def scan(self):
+    def search(self):
         while self.index < len(self.input):
             char = self.input[self.index]
             two_char = self.input[self.index:self.index + 2]
@@ -61,7 +62,7 @@ class Lexer:
             value = int(number)
         self.tokens.append(Token(TokenType.number, value))
 
-    # tokenizes booleans and keywords
+    # tokenizes keywords and booleans
     def identify_token(self):
         start_index = self.index
         while self.index < len(self.input):
@@ -71,6 +72,7 @@ class Lexer:
             self.index += 1
 
         text = self.input[start_index:self.index]
+        text = text.lower()
         if text == "true":
             self.tokens.append(Token(TokenType.true, True))
         elif text == "false":
@@ -81,6 +83,14 @@ class Lexer:
             self.tokens.append(Token(TokenType.or_bool, "or"))
         elif text == "del":
             self.tokens.append(Token(TokenType.delete, "del"))
+        elif text == "if":
+            self.tokens.append(Token(TokenType.if_syntax, "if"))
+        elif text == "while":
+            self.tokens.append(Token(TokenType.while_syntax, "while"))
+        elif text == "input":
+            self.tokens.append(Token(TokenType.input_syntax, "input"))
+        elif text == "print":
+            self.tokens.append(Token(TokenType.print_syntax, "print"))
         else:
             self.tokens.append(Token(TokenType.identifier, text))
 

@@ -1,5 +1,5 @@
 from tokens import TokenType
-from ast_nodes import ASTNode
+from ast_nodes import Nodes
 
 
 class Parser:
@@ -7,30 +7,75 @@ class Parser:
         self.tokens = tokens
         self.index = 0
 
-    def parse_all(self):
+    # each line in the file is parsed
+    def parse_file(self):
         statements = []
         while self.index < len(self.tokens):
-            stmt = self.parse()
-            statements.append(stmt)
+            if self.tokens[self.index].type == TokenType.input_end:
+                break
+
+            statement = self.parse()
+            if statement:
+                statements.append(statement)
         return statements
 
     # begins the recursion process
     def parse(self):
-        if self.match(TokenType.identifier):
-            token = self.tokens[self.index - 1]
-            if token.value == "print":
-                expr = self.parse()
-                return ASTNode("print", expression=expr)
-            else:
-                self.index -= 1
+        if self.match(TokenType.print_syntax):
+            expr = self.parse()
+            return Nodes("print", expression=expr)
 
         if self.match(TokenType.delete):
             if self.match(TokenType.identifier):
-                name_token = self.tokens[self.index - 1]
-                return ASTNode("delete", name=name_token)
+                token = self.tokens[self.index - 1]
+                return Nodes("delete", name=token)
             else:
                 raise Exception("Variable name must be entered after 'del'")
+
+        if self.match(TokenType.if_syntax):
+            return self.parse_if()
+
+        if self.match(TokenType.while_syntax):
+            return self.parse_while()
+
+        if self.match(TokenType.input_syntax):
+            return self.parse_input()
+
         return self.parse_or()
+
+    # parses if statements
+    def parse_if(self):
+        self.expect(TokenType.l_paren, "Expected an opening bracket for the if statement.")
+        condition = self.parse()
+        self.expect(TokenType.r_paren, "Expected a closing bracket for the if statement.")
+        self.expect(TokenType.left_cbracket, "Expected an opening curly bracket for the body.")
+        statements = []
+
+        while not self.match(TokenType.right_cbracket):
+            statements.append(self.parse())
+        return Nodes("if", condition=condition, statements=statements)
+
+    # parses while loops
+    def parse_while(self):
+        self.expect(TokenType.l_paren, "Expected an opening bracket for the while loop.")
+        condition = self.parse()
+        self.expect(TokenType.r_paren, "Expected a closing bracket for the while loop.")
+        self.expect(TokenType.left_cbracket, "Expected an opening curly bracket for the body.")
+        statements = []
+
+        while not self.match(TokenType.right_cbracket):
+            statements.append(self.parse())
+        return Nodes("while", condition=condition, statements=statements)
+
+    # parses the user input
+    def parse_input(self):
+        self.expect(TokenType.l_paren, "Expected an opening bracket for user input.")
+        if not self.match(TokenType.string):
+            raise Exception("Expected a string inside of input()")
+        user_input = self.tokens[self.index - 1]
+        self.expect(TokenType.r_paren, "Expected a closing bracket for user input.")
+
+        return Nodes("input", input=user_input)
 
     # calls parse_and method and parses or expressions
     def parse_or(self):
@@ -38,7 +83,7 @@ class Parser:
         while self.match(TokenType.or_bool):
             op = self.tokens[self.index - 1]
             right = self.parse_and()
-            expr = ASTNode("binary", left=expr, operator=op, right=right)
+            expr = Nodes("binary", left=expr, operator=op, right=right)
         return expr
 
     # calls parse_equality method and parses and expressions
@@ -47,16 +92,16 @@ class Parser:
         while self.match(TokenType.and_bool):
             op = self.tokens[self.index - 1]
             right = self.parse_equality()
-            expr = ASTNode("binary", left=expr, operator=op, right=right)
+            expr = Nodes("binary", left=expr, operator=op, right=right)
         return expr
 
     # calls parse_comparison method and parses equal expressions
     def parse_equality(self):
         expr = self.parse_comparison()
-        while self.match(TokenType.equal, TokenType.not_equal):
+        while self.match(TokenType.equal_comparison, TokenType.not_equal):
             op = self.tokens[self.index - 1]
             right = self.parse_comparison()
-            expr = ASTNode("binary", left=expr, operator=op, right=right)
+            expr = Nodes("binary", left=expr, operator=op, right=right)
         return expr
 
     # calls parse_add_sub method and parses comparison expressions
@@ -66,7 +111,7 @@ class Parser:
                          TokenType.greater_than, TokenType.greater_or_equal):
             op = self.tokens[self.index - 1]
             right = self.parse_add_sub()
-            expr = ASTNode("binary", left=expr, operator=op, right=right)
+            expr = Nodes("binary", left=expr, operator=op, right=right)
         return expr
 
     # calls parse_mul_div method and parses addition/subtraction expressions
@@ -75,7 +120,7 @@ class Parser:
         while self.match(TokenType.plus, TokenType.minus):
             op = self.tokens[self.index - 1]
             right = self.parse_mul_div()
-            expr = ASTNode("binary", left=expr, operator=op, right=right)
+            expr = Nodes("binary", left=expr, operator=op, right=right)
         return expr
 
     # calls parse_unary method and parses multiply/divide expressions
@@ -84,7 +129,7 @@ class Parser:
         while self.match(TokenType.multiply, TokenType.divide):
             op = self.tokens[self.index - 1]
             right = self.parse_unary()
-            expr = ASTNode("binary", left=expr, operator=op, right=right)
+            expr = Nodes("binary", left=expr, operator=op, right=right)
         return expr
 
     # calls parse_primary or parses unary expressions
@@ -92,7 +137,7 @@ class Parser:
         if self.match(TokenType.exclamation, TokenType.minus):
             op = self.tokens[self.index - 1]
             operand = self.parse_unary()
-            return ASTNode("unary", operator=op, operand=operand)
+            return Nodes("unary", operator=op, operand=operand)
         return self.parse_base()
 
     # returns base values
@@ -104,11 +149,12 @@ class Parser:
             ident = self.tokens[self.index - 1]
 
             # check for assignment
-            if self.match(TokenType.equal):
+            if self.index < len(self.tokens) and self.tokens[self.index].type == TokenType.equal:
+                self.index += 1
                 value = self.parse()
-                return ASTNode("assign", name=ident, value=value)
+                return Nodes("assign", name=ident, value=value)
 
-            return ASTNode("read", name=ident)
+            return Nodes("read", name=ident)
 
         if self.match(TokenType.l_paren):
             expr = self.parse()

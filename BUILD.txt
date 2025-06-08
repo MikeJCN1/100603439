@@ -1,0 +1,5 @@
+Requirements: Python 3.10 or any other comptabile version
+
+How to build:
+1. Add all the source files into a single directory in your IDE.
+2. Run the main file

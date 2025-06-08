@@ -3,19 +3,22 @@ from ast_parser import Parser
 from interpreter import evaluate
 
 
-def run_file(filename="input.txt"):
+def run_file():
+    filename = input("Enter filename: ")
+    if not filename:
+        filename = "test1.txt"
+
     try:
         with open(filename, 'r') as f:
-            for line in f:
-                line = line.strip()
-                print(f"\nInput: {line}")
+            file_text = f.read()
 
-                lexer = Lexer(line)
-                tokens = lexer.scan()
-                parser = Parser(tokens)
-                ast = parser.parse()
-                result = evaluate(ast)
-                if result is not None:
+            print(f"Text File:\n{file_text}")
+            tokens = Lexer(file_text).search()
+            statements = Parser(tokens).parse_file()
+
+            for statement in statements:
+                result = evaluate(statement)
+                if result is not None and statement.type not in {"assign", "print"}:
                     print("Result:", result)
 
     except FileNotFoundError:
@@ -23,29 +26,43 @@ def run_file(filename="input.txt"):
 
 
 def run_manual():
-    print("\nType 'quit' when you want to exit the loop")
+    print("\nType 'quit' to exit. Press Enter on an empty line to run a block.")
+
+    multi_line = []
     while True:
         try:
-            user_input = input("Enter your expression here: ")
-            if user_input.lower() == "quit":
-                print("Exiting the loop, goodbye.")
+            if not multi_line:
+                user_input = "Input: "
+            else:
+                user_input = ""
+            line = input(user_input)
+
+            if line.lower() == "quit":
+                print("Exiting the program, goodbye.")
                 break
 
-            lexer = Lexer(user_input)
-            tokens = lexer.scan()
-            parser = Parser(tokens)
-            ast = parser.parse()
-            result = evaluate(ast)
-            if result is not None:
-                print("Result:", result)
+            if not line and multi_line:
+                ml_input = "\n".join(multi_line)
+                multi_line.clear()
+
+                tokens = Lexer(ml_input).search()
+                statements = Parser(tokens).parse_file()
+
+                for statement in statements:
+                    result = evaluate(statement)
+                    if result is not None and statement.type not in {"assign", "print"}:
+                        print("Result:", result)
+                continue
+
+            multi_line.append(line)
 
         except Exception as e:
             print("Error:", e)
+            multi_line.clear()
 
 
 if __name__ == '__main__':
     run_file()
     run_manual()
-
 
 

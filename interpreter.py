@@ -1,5 +1,4 @@
 from tokens import TokenType
-
 Global_Variable = {}
 
 
@@ -26,7 +25,7 @@ def evaluate(expression):
     # prints the value of expressions
     elif expression.type == "print":
         value = evaluate(expression.fields["expression"])
-        print(value)
+        print(f"Result: {value}")
         return None
 
     # delete variable from the global variable dictionary
@@ -39,6 +38,26 @@ def evaluate(expression):
         else:
             raise Exception(f"Failed to delete variable: {variable}")
         return None
+
+    # handles if statements
+    elif expression.type == "if":
+        condition = evaluate(expression.fields["condition"])
+        if condition:
+            for statement in expression.fields["statements"]:
+                evaluate(statement)
+        return None
+
+    # handles while statements
+    elif expression.type == "while":
+        while evaluate(expression.fields["condition"]):
+            for statement in expression.fields["statements"]:
+                evaluate(statement)
+        return None
+
+    # handles user input
+    elif expression.type == "input":
+        user_input = expression.fields["input"].value
+        return input(user_input)
 
     # handles unary expressions
     elif expression.type == "unary":
@@ -81,7 +100,7 @@ def evaluate(expression):
                 TokenType.greater_or_equal: left >= right
             }[operator]
 
-        elif operator == TokenType.equal:
+        elif operator == TokenType.equal_comparison:
             return left == right
         elif operator == TokenType.not_equal:
             return left != right
@@ -93,5 +112,5 @@ def evaluate(expression):
             raise Exception(f"Failed to identify the operator: {operator}")
 
     else:
-        raise Exception(f"Failed to identify the AST node: {expression.type}")
+        raise Exception(f"Failed to identify the node: {expression.type}")
 

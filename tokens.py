@@ -6,9 +6,6 @@ class Token:
         self.type = token_type
         self.value = value
 
-    def __repr__(self):
-        return f"({self.type}, {repr(self.value)})"
-
 
 class TokenType(Enum):
     number = 1
@@ -26,10 +23,17 @@ class TokenType(Enum):
     less_or_equal = 13
     greater_or_equal = 14
     equal = 15
-    not_equal = 16
-    and_bool = 17
-    or_bool = 18
-    exclamation = 19
-    string = 20
-    identifier = 21
-    delete = 22
+    equal_comparison = 16
+    not_equal = 17
+    and_bool = 18
+    or_bool = 19
+    exclamation = 20
+    string = 21
+    identifier = 22
+    delete = 23
+    if_syntax = 24
+    while_syntax = 25
+    input_syntax = 26
+    left_cbracket = 27
+    right_cbracket = 28
+    print_syntax = 29
